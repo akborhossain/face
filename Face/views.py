@@ -4,7 +4,7 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import ImageUploadSerializer
+from .serializers import *
 import cv2
 import numpy as np
 from insightface.app import FaceAnalysis
@@ -90,6 +90,41 @@ class FaceAuthAPIView(APIView):
 
             return Response({"results": results}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+DB_DIR = r"D:/Python project/Django/FaceAPI/Face/db"
+
+class AddToDBAPIView(APIView):
+    def post(self, request):
+        serializer = DBImageUploadSerializer(data=request.data)
+        if serializer.is_valid():
+            image_file = serializer.validated_data['image']
+            name = serializer.validated_data['name']
+
+            np_img = np.frombuffer(image_file.read(), np.uint8)
+            img = cv2.imdecode(np_img, cv2.IMREAD_COLOR)
+            img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+            boxes = face_recognition.face_locations(img_rgb, model='hog')
+            if not boxes:
+                return Response({"error": "No face found in image"}, status=status.HTTP_400_BAD_REQUEST)
+
+            top, right, bottom, left = max(boxes, key=lambda b: (b[2]-b[0]) * (b[1]-b[3]))
+            encodings = face_recognition.face_encodings(img_rgb, known_face_locations=[(top, right, bottom, left)])
+
+            if not encodings:
+                return Response({"error": "Failed to generate encoding"}, status=status.HTTP_400_BAD_REQUEST)
+
+            embedding = encodings[0]
+            pkl_path = os.path.join(DB_DIR, f"{name}.pkl")
+
+            with open(pkl_path, 'wb') as f:
+                pickle.dump(embedding, f)
+
+            return Response({"message": f"✅ Saved embedding as {name}.pkl"}, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 
 
