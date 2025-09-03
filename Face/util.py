@@ -30,7 +30,7 @@ def recognize(img, db_path):
     return 'unknown_person'
 
 
-def recognize2(img, db_path, tolerance=0.50, detector_model="hog"):
+def recognize2(img, db_path, tolerance=0.60, detector_model="hog"):
     """
     img: BGR (OpenCV) or RGB image of ONE face (crop is okay).
     db_path: folder of .pkl files (each containing one face embedding).

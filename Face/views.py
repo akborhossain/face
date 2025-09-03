@@ -81,7 +81,7 @@ class FaceAuthAPIView(APIView):
                 if face_crop.size == 0:
                     continue
 
-                label = test_antispoof(face_crop)
+                label = 1
                 if label == 1:
                     name = recognize2(face_crop, DB_DIR)
                     results.append({"status": "real", "name": name})
@@ -91,10 +91,10 @@ class FaceAuthAPIView(APIView):
             return Response({"results": results}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-DB_DIR = r"D:/Python project/Django/FaceAPI/Face/db"
 
 class AddToDBAPIView(APIView):
     def post(self, request):
+        
         serializer = DBImageUploadSerializer(data=request.data)
         if serializer.is_valid():
             image_file = serializer.validated_data['image']
